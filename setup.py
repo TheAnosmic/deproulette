@@ -1,65 +1,37 @@
-from random import choice, randint
+import random
 import sys
 import logging
 import re
 from setuptools import setup
 
-PY2 = False
+PYPY_SIMPLE_URL = 'https://pypi.python.org/simple/'
 
-if sys.version_info < (3, 0):
-    PY2 = True
+PY2 = sys.version_info < (3, 0)
 
+if PY2:
+    import urllib2 as urllib
+else:
+    import urllib
 
 _log = logging.getLogger(__name__)
 
 
-def get_py2(url):
-    import urllib2
-
-    return urllib2.urlopen(url)
-
-
-def get_py3(url):
-    from urllib.request import urlopen
-
-    return urlopen(url)
-
-
 def get_packages(url):
-    if PY2:
-        res = get_py2(url)
-    else:
-        res = get_py3(url)
-
-    packages = []
+    res = urllib.urlopen(url)
 
     pkg_re = re.compile(r'<a href=\'([^\']*)\'')
-
-    for line in res.readlines():
-        if not PY2:
-            line = line.decode('utf8')
-
-        _log.debug('line: %s', line)
-
-        matches = pkg_re.search(line)
-
-        if matches:
-            packages.append(matches.group(1))
-
-    _log.debug('packages: %s', packages)
-
+    packages = pkg_re.findall(res.read())
+    _log.debug('\n'.join('packages: %s' % package for package in packages))
     return packages
 
 
 def get_deps():
     _log.info('Getting possible dependencies. This may take a while if you '
               'are on a hotel wifi.')
-    packages = get_packages('https://pypi.python.org/simple/')
+    packages = get_packages(PYPY_SIMPLE_URL)
 
-    deps = []
-
-    for i in range(0, randint(3, 5)):
-        deps.append(choice(packages))
+    number_of_deps = random.randint(3, 5)
+    deps = random.sample(packages, number_of_deps)
 
     _log.info('You got \n- %s\nas dependenc(y|ies). Good luck!',
               '\n- '.join(deps))
@@ -75,7 +47,7 @@ def main(argv=None):
 
     setup(
         name='deproulette',
-        version='1.0.2',
+        version='1.0.3',
         author='Joar Wandborg',
         author_email='name \\x40 lastname. se',
         url='https://github.com/joar/deproulette',
@@ -87,7 +59,7 @@ def main(argv=None):
 
 if __name__ == '__main__':
     import os
-
+    print '\n'.join(get_deps())
     _log.setLevel(getattr(logging, os.environ.get('LOGLEVEL', 'INFO')))
 
     handler = logging.StreamHandler()
