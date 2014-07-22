@@ -59,7 +59,7 @@ def main(argv=None):
 
 if __name__ == '__main__':
     import os
-    print '\n'.join(get_deps())
+    
     _log.setLevel(getattr(logging, os.environ.get('LOGLEVEL', 'INFO')))
 
     handler = logging.StreamHandler()
